@@ -13,3 +13,4 @@ SCU.jpg -> picture of SCU logo is kept in src/main/resources
 #Domain Objects
 Month
 Holiday
+And APP as an entry point for the enabling APP.
