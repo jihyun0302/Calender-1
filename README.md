@@ -16,4 +16,5 @@ Holiday
 And APP as an entry point for the enabling APP.
 
 
-![image](https://drive.google.com/file/d/16TIOUvCCkvK5mEnlGxz__ebHVlVgpsP0/view?usp=sharing)
+![image](https://user-images.githubusercontent.com/8927832/52853265-ed5a6a80-30cf-11e9-912a-518ef291c21a.PNG)
+
