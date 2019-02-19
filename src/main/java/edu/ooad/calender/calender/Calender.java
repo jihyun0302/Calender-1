@@ -9,17 +9,27 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import edu.ooad.calender.model.Holiday;
@@ -29,23 +39,24 @@ import edu.ooad.calender.model.Month;
 /**
  * @author Thomas Francis
  * 
- * Class Calender - an swing based calender for year 2019
+ *         Class Calender - an swing based calender for year 2019
  *
  */
-public class Calender {
+public class Calender implements ActionListener {
 
   private static final String IMAGE_FILE = "SCU.jpg";
 
-  private static final List<String> DAYS_OF_WEEK =
-      asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+  private static final List<String> DAYS_OF_WEEK = asList("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 
   Map<String, Month> monthMap = new LinkedHashMap<String, Month>();
   Map<String, List<Holiday>> holidaysMap = new HashMap<String, List<Holiday>>();
+  private JFrame frame;
+  private Dimension screenSize;
 
   // intialize to 2, January has two blocks empty
   int empty_blocks = 2;
 
-  public Calender(){
+  public Calender() {
     init();
   }
 
@@ -54,6 +65,11 @@ public class Calender {
    * 
    */
   public void init() {
+
+    frame = new JFrame("C A L E N D E R");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
     monthMap.put("January", getMonthData("January", 31, asList(new Holiday(1, "New Year"), new Holiday(21, "Birthday of Martin Luther King, Jr."))));
     monthMap.put("February", getMonthData("February", 29, asList(new Holiday(18, "Washington’s Birthday"))));
     monthMap.put("March", getMonthData("March", 31, emptyList()));
@@ -66,13 +82,14 @@ public class Calender {
     monthMap.put("October", getMonthData("October", 31, asList(new Holiday(14, "Columbus Day"))));
     monthMap.put("November", getMonthData("November", 30, asList(new Holiday(11, "Veteran's Day"), new Holiday(28, "Thanksgiving Day"))));
     monthMap.put("December", getMonthData("December", 31, asList(new Holiday(25, "Christmas"))));
+    screenSize = Toolkit.getDefaultToolkit().getScreenSize();
   }
 
-  
+
   /**
    * @param name
    * @param days
-   * @param holidays 
+   * @param holidays
    * @return Month Object
    */
   private Month getMonthData(String name, int days, List<Holiday> holidays) {
@@ -80,37 +97,114 @@ public class Calender {
   }
 
   /**
-   * entry method to open calender
+   * entry method to open calendar
    */
   public void runCalender() {
-    JFrame frame = new JFrame("Calender");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
     JPanel containerPanel = new JPanel();
-    containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.Y_AXIS));
+    BoxLayout boxLayout = new BoxLayout(containerPanel, BoxLayout.Y_AXIS);
+    containerPanel.setLayout(boxLayout);
+//    containerPanel.setPreferredSize(screenSize);
     containerPanel.add(addLogoPanel());
 
-    // Adding month panels
-    monthMap.values().forEach(month -> containerPanel.add(getMonthPanel(month)));
+    JPanel editPanel = addEditPanel();
+//    containerPanel.add(editPanel, BorderLayout.EAST);
 
-    JScrollPane scrollPane = new JScrollPane(containerPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    JPanel calenderView = getCalenderPanel();
+    calenderView.add(getMonthPanel(monthMap.get("March"), calenderView.getPreferredSize()));
+    monthMap.values().forEach(month -> calenderView.add(getMonthPanel(month, calenderView.getPreferredSize())));
+    calenderView.setAutoscrolls(true);
+    containerPanel.add(calenderView);
     
-    frame.getContentPane().add(scrollPane, BorderLayout.EAST);
+    JScrollPane scrollPane = new JScrollPane(calenderView, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+    scrollPane.setBounds(0, 0, 10, 900);
+    
+    frame.setLocationRelativeTo(null);
+    frame.getContentPane().add(scrollPane);
     frame.pack();
     frame.setVisible(true);
   }
 
+  private JPanel getCalenderPanel() {
+    JPanel calenderView = new JPanel();
+    calenderView.setLayout( new BoxLayout(calenderView, BoxLayout.Y_AXIS));
+    calenderView.setSize(getIntValOfDouble(screenSize.getWidth() * 3.5/5), getIntValOfDouble(screenSize.getHeight() * 9/10));
+    calenderView.setPreferredSize(new Dimension(getIntValOfDouble(screenSize.getWidth() * 3.4/5), getIntValOfDouble(screenSize.getHeight() * 9/10)));
+    calenderView.setAutoscrolls(true);
+    return calenderView;
+  }
+
+  private JPanel addEditPanel() {
+    JPanel editPanel = new JPanel();
+//    editPanel.setSize(getIntValOfDouble(screenSize.getWidth() * 2.5/5), getIntValOfDouble(screenSize.getHeight() * 8.5/10));
+    editPanel.setPreferredSize(new Dimension(getIntValOfDouble(screenSize.getWidth() * 1.5/5), getIntValOfDouble(screenSize.getHeight() * 9/10)));    
+    editPanel.setBackground(Color.MAGENTA);
+    editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.Y_AXIS));
+    JLabel panelName = new JLabel("Customize Calender");
+    JPanel firstPanel = new JPanel();
+    JLabel eventNameLabel = new JLabel("Event Name:");
+    JTextField eventName = new JTextField("                         ");
+    JLabel eventNameDateLabel = new JLabel("Event Date:");
+    JTextField eventDate = new JTextField("                         ");
+    JButton addEventButton = new JButton("Add Event");
+    
+    firstPanel.add(eventNameLabel);
+    firstPanel.add(eventName);
+    firstPanel.add(eventNameDateLabel);
+    firstPanel.add(eventDate);
+    firstPanel.add(addEventButton);
+    
+    JLabel textColor = new JLabel("Change Text Color :");
+    JComboBox<String> dropDown = new JComboBox<String>();
+    dropDown.setName("Change Text Color: ");
+    dropDown.addItem("GREEN");
+    dropDown.addItem("RED");
+    dropDown.addItem("BLUE");
+    JLabel historyLabel = new JLabel("History:");
+    JTextArea textArea = new JTextArea();
+    textArea.setPreferredSize(new Dimension(20,20));
+    JButton deleteButton = new JButton("Delete Event");
+    editPanel.add(panelName);
+    editPanel.add(firstPanel);
+    editPanel.add(textColor);
+    editPanel.add(dropDown);
+    editPanel.add(historyLabel);
+    editPanel.add(textArea);
+    editPanel.add(deleteButton);
+    return editPanel;
+  }
+
+  private int getIntValOfDouble(double d) {
+    return Double.valueOf(d).intValue();
+  }
+
   /**
    * This add static SCU logo panel
+   * 
    * @return Jpanel
    */
   private JPanel addLogoPanel() {
     JPanel logoPanel = new JPanel();
-    logoPanel.add(new JLabel(new ImageIcon(getClass().getClassLoader().getResource(IMAGE_FILE))), SwingConstants.CENTER);
-    logoPanel.setPreferredSize(new Dimension(1350, 90));
-    logoPanel.setBorder(createLineBorder(Color.black));
+    logoPanel.add(new JLabel(new ImageIcon(getClass().getClassLoader().getResource(IMAGE_FILE))),
+        SwingConstants.CENTER);
+
+    JRadioButton day = new JRadioButton("D A Y");
+    JRadioButton month = new JRadioButton("M O N T H");
+    JRadioButton year = new JRadioButton("Y E A R");
+
+    ButtonGroup radioButtonGroup = new ButtonGroup();
+    radioButtonGroup.add(day);
+    radioButtonGroup.add(month);
+    radioButtonGroup.add(year);
+
+    logoPanel.add(day);
+    logoPanel.add(month);
+    logoPanel.add(year);
+    
+    logoPanel.setBackground(Color.GRAY);
+    System.out.println(screenSize.getHeight() + " " + screenSize.getWidth());
+//    logoPanel.setSize(new Dimension(getIntValOfDouble(screenSize.getWidth()), getIntValOfDouble(screenSize.getHeight()* 1.5/10) ));
+    logoPanel.setPreferredSize(new Dimension(getIntValOfDouble(screenSize.getWidth()), getIntValOfDouble(screenSize.getHeight()* 1.2/10)));// TODO update it with dynamic value
+    logoPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
     return logoPanel;
   }
 
@@ -124,27 +218,30 @@ public class Calender {
   }
 
   /**
-   * This will retrieve the customize Month Panel for specific details about the 
-   * month
+   * This will retrieve the customize Month Panel for specific details about the month
+   * 
    * @param month
+   * @param superContainerSize 
    * @return Component
    */
-  private Component getMonthPanel(Month month) {
+  private Component getMonthPanel(Month month, Dimension superContainerSize) {
     JPanel monthContainer = new JPanel();
+    monthContainer.setPreferredSize(new Dimension(getIntValOfDouble(superContainerSize.getWidth() * 1), getIntValOfDouble(superContainerSize.getHeight() * 0.9)));
     monthContainer.setLayout(new BoxLayout(monthContainer, BoxLayout.Y_AXIS));
-    JPanel gridDaysPanel = processAndGetDayGridPanel(month);
-    monthContainer.add(getMonthNamePanel(month.getName()));
-    monthContainer.add(retrieveDaysNamePanel());
-    monthContainer.add(gridDaysPanel);
+    monthContainer.add(getMonthNamePanel(month.getName(), monthContainer.getPreferredSize()));
+    monthContainer.add(retrieveDaysNamePanel(monthContainer.getPreferredSize()));
+    monthContainer.add(processAndGetDayGridPanel(month, monthContainer.getPreferredSize()));
     return monthContainer;
   }
 
   /**
    * Generate the label for each days and add to grid Panel
+   * 
    * @param month
+   * @param superContainerGridSize 
    * @return Jpanel
    */
-  private JPanel processAndGetDayGridPanel(Month month) {
+  private JPanel processAndGetDayGridPanel(Month month, Dimension superContainerGridSize) {
     JPanel gridDaysPanel = new JPanel();
     gridDaysPanel.setLayout(new GridLayout(0, 7));
     gridDaysPanel.setPreferredSize(new Dimension(1350, 725));
@@ -159,16 +256,13 @@ public class Calender {
 
       JLabel dayLabel = new JLabel(String.valueOf(date), SwingConstants.CENTER);
       dayLabel.setOpaque(true);
-      Optional<Holiday> holiday =
-          month.getHolidays().stream().filter(day -> day.getDate() == date).findFirst();
+      Optional<Holiday> holiday = month.getHolidays().stream().filter(day -> day.getDate() == date).findFirst();
       if (firstDayOfTheMonth) {
-        dayLabel.setText(holiday.isPresent() ? date + " (" + holiday.get().getEvent() + ") "
-            : dayLabel.getText());
+        dayLabel.setText(holiday.isPresent() ? date + " (" + holiday.get().getEvent() + ") " : dayLabel.getText());
         dayLabel.setBackground(new Color(111, 155, 68));
         firstDayOfTheMonth = false;
       } else {
-        dayLabel.setText(holiday.isPresent() ? date + " (" + holiday.get().getEvent() + ") "
-            : dayLabel.getText());
+        dayLabel.setText(holiday.isPresent() ? date + " (" + holiday.get().getEvent() + ") " : dayLabel.getText());
         dayLabel.setBackground(new Color(179, 206, 152));
       }
       dayLabel.setBorder(createLineBorder(Color.black));
@@ -182,6 +276,7 @@ public class Calender {
   /**
    * 
    * Adding Empty Labels
+   * 
    * @param gridDaysPanel
    * @param noOfBlocks
    */
@@ -197,10 +292,11 @@ public class Calender {
 
   /**
    * Get Month Name Panel
+   * 
    * @param name
    * @return Jpanel
    */
-  private JPanel getMonthNamePanel(String name) {
+  private JPanel getMonthNamePanel(String name, Dimension superContainerSize) {
     JPanel monthNamePanel = new JPanel();
     monthNamePanel.setPreferredSize(new Dimension(1350, 35));
     setPanelColor(monthNamePanel, new Color(108, 122, 95));
@@ -212,9 +308,11 @@ public class Calender {
 
   /**
    * Retrieve static day name panel
+   * @param superContainerSize 
+   * 
    * @return
    */
-  private Component retrieveDaysNamePanel() {
+  private Component retrieveDaysNamePanel(Dimension superContainerSize) {
     JPanel jPanel = new JPanel();
     jPanel.setLayout(new GridLayout(0, 7));
     jPanel.setPreferredSize(new Dimension(1350, 20));
@@ -224,5 +322,17 @@ public class Calender {
       jPanel.add(label);
     }
     return jPanel;
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+    String actionCommand = e.getActionCommand();
+    if (actionCommand.equals("day")) {
+      // add functionality for day show
+    } else if (actionCommand.equals("month")) {
+      // add functionality for the month show
+    } else {
+      // add data for year
+    }
   }
 }
